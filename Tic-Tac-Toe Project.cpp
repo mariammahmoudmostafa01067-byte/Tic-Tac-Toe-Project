@@ -26,46 +26,54 @@ using namespace std;
     =========================================================
 */
 
-
-
 /*
     =========================================================
     PERSON 1: Board class (Structure & Display) - COMPLETE
     =========================================================
 */
-class Board {
+class Board
+{
 private:
     vector<vector<char>> grid;
     int size;
 
 public:
-    Board(int size = 3) {
+    Board(int size = 3)
+    {
         this->size = size;
         grid.assign(size, vector<char>(size, ' '));
     }
 
     // display
-    void display() const {
+    void display() const
+    {
         cout << "   ";
-        for (int col = 0; col < size; col++) {
+        for (int col = 0; col < size; col++)
+        {
             cout << " " << (col + 1) << "  ";
         }
         cout << endl;
 
-        for (int row = 0; row < size; row++) {
+        for (int row = 0; row < size; row++)
+        {
             cout << (row + 1) << "  ";
 
-            for (int col = 0; col < size; col++) {
+            for (int col = 0; col < size; col++)
+            {
                 cout << " " << grid[row][col] << " ";
-                if (col < size - 1) cout << "|";
+                if (col < size - 1)
+                    cout << "|";
             }
             cout << endl;
 
-            if (row < size - 1) {
+            if (row < size - 1)
+            {
                 cout << "   ";
-                for (int col = 0; col < size; col++) {
+                for (int col = 0; col < size; col++)
+                {
                     cout << "---";
-                    if (col < size - 1) cout << "+";
+                    if (col < size - 1)
+                        cout << "+";
                 }
                 cout << endl;
             }
@@ -81,27 +89,18 @@ public:
 
     // makeMove
 
-
     // isValidMove
-
 
     // checkWin
 
-
     // isFull
-
 
     // getCell
 
-
     // reset
 
-
     // getSize
-
-
 };
-
 
 /*
     =========================================================
@@ -111,19 +110,13 @@ public:
 
 // Player (constructor)
 
-
 // getMove (pure virtual)
-
 
 // getName
 
-
 // getSymbol
 
-
 // setName
-
-
 
 /*
     =========================================================
@@ -133,22 +126,15 @@ public:
 
 // AIPlayer (constructor)
 
-
 // getMove (override)
-
 
 // setDifficulty
 
-
 // getRandomMove -- Person 4
-
 
 // getBestMove -- Person 5
 
-
 // evaluateBoard -- Person 5
-
-
 
 /*
     =========================================================
@@ -156,46 +142,96 @@ public:
     =========================================================
 */
 
-// Game (constructor) -- Person 6
+class Game
+{
+private:
+    Board board;
+    Player *currentPlayer;
+    Player *player1;
+    Player *player2;
 
+public:
+    Game(Player *p1, Player *p2)
+    {
+        player1 = p1;
+        player2 = p2;
+        currentPlayer = player1;
+    }
 
-// start -- Person 6
+    // start -- Person 6
 
+    // showMenu -- Person 6
 
-// showMenu -- Person 6
+    // setupPvP -- Person 6
 
+    // setupPvC -- Person 6
 
-// setupPvP -- Person 6
+    // switchPlayer -- Person 7
+    void switchPlayer() { currentPlayer = (currentPlayer == player1) ? player2 : player1; }
 
+    // handleHumanMove -- Person 7
+    void handleHumanMove()
+    {
+        int row, col;
+        while (true)
+        {
+            cout << currentPlayer->getName() << " (" << currentPlayer->getSymbol()
+                 << "), enter your move (row and column): ";
+            if (!(cin >> row >> col))
+            {
+                cin.clear();
+                cin.ignore(10000, '\n');
+                cout << "Invalid input: please enter numbers only." << endl;
+                continue;
+            }
+            row--;
+            col--;
+            cin.ignore(10000, '\n');
+            if (row >= 0 && row < board.getSize() && col >= 0 && col < board.getSize() && board.isValidMove(row, col))
+            {
+                board.makeMove(row, col, currentPlayer->getSymbol());
+                return;
+            }
+            cout << "Invalid move! Please try again." << endl;
+        }
+    }
 
-// setupPvC -- Person 6
+    // handleAIMove -- Person 7
+    void handleAIMove()
+    {
+        auto [r, c] = currentPlayer->getMove(board);
+        board.makeMove(r, c, currentPlayer->getSymbol());
+    }
 
+    // checkGameEnd -- Person 7
+    bool checkGameEnd() { return board.checkWin(currentPlayer->getSymbol()) || board.isFull(); }
 
-// switchPlayer -- Person 7
+    // displayResult -- Person 7
+    void displayResult()
+    {
+        if (board.checkWin(player1->getSymbol()))
+            cout << player1->getName() << " wins\n";
+        else if (board.checkWin(player2->getSymbol()))
+            cout << player2->getName() << " wins\n";
+        else
+            cout << "It's a draw\n";
+    }
 
-
-// handleHumanMove -- Person 7
-
-
-// handleAIMove -- Person 7
-
-
-// checkGameEnd -- Person 7
-
-
-// displayResult -- Person 7
-
-
-// reset -- Person 7
-
-
+    // reset -- Person 7
+    void reset()
+    {
+        board.reset();
+        currentPlayer = player1;
+    }
+};
 
 /*
     =========================================================
     MAIN FUNCTION
     =========================================================
 */
-int main() {
+int main()
+{
     Board board(3);
     board.display();
 
