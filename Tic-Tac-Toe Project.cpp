@@ -101,6 +101,11 @@ public:
     // reset
 
     // getSize
+
+    void undoMove(int row, int col){//helper method for minimax algorithm -Mostafa 
+        grid[row][col] = ' ';
+        return;
+    }
 };
 
 /*
@@ -124,10 +129,12 @@ public:
     PERSON 4 & 5: AIPlayer class
     =========================================================
 */
+
 class AIPlayer :public Player {
 private:
     Difficulty difficulty;
 public:
+
 // AIPlayer (constructor)
     AIPlayer(const string& name, char symbol, Difficulty difficulty):
     Player(name,symbol)
@@ -164,10 +171,72 @@ public:
         col = emptyCells[randomIndex].second;
     }
 
-// getBestMove -- Person 5
+void getBestMove(Board& board, int& row, int& col) const{
+    char aiSymbol = this->getSymbol();
+    char opponentSymbol = (aiSymbol == 'X') ? 'O' : 'X';
+    
+    row = -1;
+    col = -1;
+    int best_score = INT_MIN;
 
-// evaluateBoard -- Person 5
+    for(int r = 0; r < board.getSize(); r++){
+        for(int c = 0; c < board.getSize(); c++){
+            if(board.isValidMove(r, c)){
+                board.makeMove(r, c, aiSymbol);
+                int score = minimax(board,false,aiSymbol,opponentSymbol);
+                board.undoMove(r, c);
+                if(score >= best_score){
+                    best_score = score;
+                    row = r;
+                    col = c;
+                }
+            }
+        }
+    }
 
+ } //-- Person 5
+
+int evaluateBoard(const Board& board) const{
+    char aiSymbol = this->getSymbol();
+    char opponentSymbol = (aiSymbol == 'X') ? 'O' : 'X';
+    if(board.checkWin(aiSymbol)){
+        return 10;
+    } else if(board.checkWin(opponentSymbol)){
+        return -10;
+    } else {
+        return 0;
+    }
+}
+
+int minimax(Board& board,bool isAi, char ai, char player) const//isAi here means if its the Ais turn or not
+{
+    if (board.checkWin(ai) || board.checkWin(player) || board.isFull()){
+    return evaluateBoard(board);
+    }
+
+    int best = isAi ? INT_MIN : INT_MAX;
+
+    for (int r = 0; r < board.getSize(); r++)
+    {
+        for (int c = 0; c < board.getSize(); c++)
+        {
+            if (board.isValidMove(r, c))
+            {
+                board.makeMove(r, c, isAi ? ai : player);
+                int score = minimax(board, !isAi, ai, player);
+                board.undoMove(r,c);
+                if(isAi){
+                    best = max(best, score);
+                }
+                 else {
+                    best = min(best, score);
+                }
+            }
+        }
+    }
+
+    return best;
+}
 };
 
 
