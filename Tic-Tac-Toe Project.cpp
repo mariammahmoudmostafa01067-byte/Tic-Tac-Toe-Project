@@ -25,6 +25,7 @@ using namespace std;
     PERSON 4: Difficulty enum
     =========================================================
 */
+enum Difficulty  { EASY,HARD };
 
 /*
     =========================================================
@@ -123,18 +124,52 @@ public:
     PERSON 4 & 5: AIPlayer class
     =========================================================
 */
-
+class AIPlayer :public Player {
+private:
+    Difficulty difficulty;
+public:
 // AIPlayer (constructor)
+    AIPlayer(const string& name, char symbol, Difficulty difficulty):
+    Player(name,symbol)
+    {
+        this->difficulty = difficulty;
+    }
 
 // getMove (override)
-
+    void getMove(const Board& board,int& row, int& col)override {
+        if (difficulty == EASY) {
+            getRandomMove(board,row,col);
+        }
+        else if (difficulty == HARD) {
+            getBestMove(board,row,col);
+        }
+    }
 // setDifficulty
+    void setDifficulty(Difficulty newDifficulty) {
+        difficulty = newDifficulty;
+    }
 
 // getRandomMove -- Person 4
+    void getRandomMove(const Board& board, int& row, int& col)const {
+        vector<pair<int, int>>emptyCells;
+        for (int r = 0;r < board.getSize();r++) {
+            for (int c = 0;c < board.getSize();c++) {
+                if (board.getCell(r, c) == ' ') {
+                    emptyCells.push_back({ r, c });
+                }
+            }
+        }
+        int randomIndex = rand() % emptyCells.size();
+        row = emptyCells[randomIndex].first;
+        col = emptyCells[randomIndex].second;
+    }
 
 // getBestMove -- Person 5
 
 // evaluateBoard -- Person 5
+
+};
+
 
 /*
     =========================================================
