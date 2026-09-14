@@ -93,8 +93,37 @@ public:
     // isValidMove
 
     // checkWin
+bool checkWin(char symbol) const {
+    for (int i = 0; i < size; ++i) {
+        bool rowWin = true, colWin = true;
+        for (int j = 0; j < size; ++j) {
+            if (grid[i][j] != symbol) rowWin = false;
+            if (grid[j][i] != symbol) colWin = false;
+        }
+        if (rowWin || colWin) return true;
+    }
+    bool diag1Win = true, diag2Win = true;
+    for (int i = 0; i < size; ++i) {
+        if (grid[i][i] != symbol) diag1Win = false;
+        if (grid[i][size - 1 - i] != symbol) diag2Win = false;
+    }
+    return diag1Win || diag2Win;
+}
 
     // isFull
+bool isFull() const {
+    for (int r = 0; r < size; ++r) {
+        for (int c = 0; c < size; ++c) {
+            if (grid[r][c] == ' ') return false;
+        }
+    }
+    return true;
+}
+
+//checkGameEnd
+bool checkGameEnd() const {
+    return checkWin('X') || checkWin('O') || isFull();
+}
 
     // getCell
 
