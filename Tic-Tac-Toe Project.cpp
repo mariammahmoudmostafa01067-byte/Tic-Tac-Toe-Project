@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <utility>
 #include <limits>
+#include <cctype>
 
 using namespace std;
 
@@ -25,7 +26,6 @@ public:
         this->size = size;
         grid.assign(size, vector<char>(size, ' '));
     }
-
 
     void display() const
     {
@@ -69,7 +69,6 @@ public:
         return grid[row][col] == ' ';
     }
 
-
     bool makeMove(int row, int col, char symbol)
     {
         if (!isValidMove(row, col)) return false;
@@ -77,24 +76,20 @@ public:
         return true;
     }
 
-
     char getCell(int row, int col) const
     {
         return grid[row][col];
     }
-
 
     void reset()
     {
         grid.assign(size, vector<char>(size, ' '));
     }
 
-
     int getSize() const
     {
         return size;
     }
-
 
     bool checkWin(char symbol) const
     {
@@ -114,7 +109,6 @@ public:
         return diag1Win || diag2Win;
     }
 
-
     bool isFull() const
     {
         for (int r = 0; r < size; ++r) {
@@ -125,19 +119,16 @@ public:
         return true;
     }
 
-
     bool checkGameEnd() const
     {
         return checkWin('X') || checkWin('O') || isFull();
     }
-
 
     void undoMove(int row, int col)
     {
         grid[row][col] = ' ';
     }
 };
-
 
 class Player
 {
@@ -157,7 +148,10 @@ public:
     virtual ~Player() {}
 };
 
-
+// Concrete Player used for PvP and the human side of PvC.
+// The real input reading/validation for a turn happens in
+// Game::handleHumanMove(); this override just satisfies the
+// abstract Player interface.
 class HumanPlayer : public Player
 {
 public:
@@ -170,7 +164,6 @@ public:
         row--; col--;
     }
 };
-
 
 class AIPlayer : public Player
 {
@@ -185,7 +178,6 @@ public:
         this->difficulty = difficulty;
     }
 
-
     void getMove(Board& board, int& row, int& col) override
     {
         if (difficulty == EASY) {
@@ -196,12 +188,10 @@ public:
         }
     }
 
-
     void setDifficulty(Difficulty newDifficulty)
     {
         difficulty = newDifficulty;
     }
-
 
     void getRandomMove(const Board& board, int& row, int& col) const
     {
@@ -217,7 +207,6 @@ public:
         row = emptyCells[randomIndex].first;
         col = emptyCells[randomIndex].second;
     }
-
 
     void getBestMove(Board& board, int& row, int& col) const
     {
@@ -244,7 +233,6 @@ public:
         }
     }
 
-
     int evaluateBoard(const Board& board) const
     {
         char aiSymbol = this->getSymbol();
@@ -257,7 +245,6 @@ public:
             return 0;
         }
     }
-
 
     int minimax(Board& board, bool isAi, char ai, char player) const
     {
@@ -288,7 +275,6 @@ public:
     }
 };
 
-
 class Game
 {
 private:
@@ -309,7 +295,6 @@ public:
         delete player2;
     }
 
-
     void showMenu()
     {
         int choice;
@@ -325,13 +310,15 @@ public:
 
             if (!(cin >> choice)) {
                 if (cin.eof()) {
-                    cout << "\nNo more input available. Exiting game." << endl;
+                    cout << "\nNo more input available. Exiting game. " << endl;
                     exit(0);
                 }
                 cin.clear();
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 choice = -1;
+                continue;
             }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
         } while (choice < 1 || choice > 4);
 
         switch (choice) {
@@ -342,7 +329,6 @@ public:
         }
     }
 
-    // setupPvP
     void setupPvP()
     {
         string n1, n2;
@@ -350,53 +336,61 @@ public:
         cin >> n1;
         cout << "Enter name for Player 2 (O): ";
         cin >> n2;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         delete player1; delete player2;
         player1 = new HumanPlayer(n1, 'X');
         player2 = new HumanPlayer(n2, 'O');
     }
 
-    // setupPvC
     void setupPvC(Difficulty difficulty)
     {
         string name;
         cout << "Enter your name: ";
         cin >> name;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         delete player1; delete player2;
         player1 = new HumanPlayer(name, 'X');
         player2 = new AIPlayer("Computer", 'O', difficulty);
     }
 
-    // switchPlayer
     void switchPlayer()
     {
         currentPlayer = (currentPlayer == player1) ? player2 : player1;
     }
 
-    // handleHumanMove
     void handleHumanMove()
     {
-        int row, col;
         while (true)
         {
             cout << currentPlayer->getName() << " (" << currentPlayer->getSymbol()
-                 << "), enter your move (row and column): ";
-            if (!(cin >> row >> col))
+                 << "), Enter your move ( row and column) :  ";
+
+            string line;
+            if (!getline(cin, line))
             {
-                if (cin.eof())
-                {
-                    cout << "\nNo more input available. Exiting game." << endl;
-                    exit(0);
-                }
-                cin.clear();
-                cin.ignore(10000, '\n');
-                cout << "Invalid input: please enter numbers only." << endl;
+                cout << "\nNo more input available. Exiting game." << endl;
+                exit(0);
+            }
+
+            // Keep only the digit characters, ignoring spaces, commas, etc.
+            string digits;
+            for (char ch : line)
+            {
+                if (isdigit(static_cast<unsigned char>(ch)))
+                    digits += ch;
+            }
+
+            if (digits.size() != 2)
+            {
+                cout << "Invalid input: please enter a row and a column." << endl;
                 continue;
             }
-            row--;
-            col--;
-            cin.ignore(10000, '\n');
+
+            int row = (digits[0] - '0') - 1;
+            int col = (digits[1] - '0') - 1;
+
             if (row >= 0 && row < board.getSize() && col >= 0 && col < board.getSize() && board.isValidMove(row, col))
             {
                 board.makeMove(row, col, currentPlayer->getSymbol());
@@ -406,7 +400,6 @@ public:
         }
     }
 
-    // handleAIMove
     void handleAIMove()
     {
         int row, col;
@@ -416,13 +409,11 @@ public:
              << row + 1 << ", " << col + 1 << ")" << endl;
     }
 
-    // checkGameEnd
     bool checkGameEnd()
     {
         return board.checkWin(currentPlayer->getSymbol()) || board.isFull();
     }
 
-    // displayResult
     void displayResult() const
     {
         if (board.checkWin(player1->getSymbol()))
@@ -433,14 +424,12 @@ public:
             cout << "It's a draw\n";
     }
 
-    // reset
     void reset()
     {
         board.reset();
         currentPlayer = player1;
     }
 
-    // start
     void start()
     {
         running = true;
@@ -479,12 +468,6 @@ public:
     }
 };
 
-
-/*
-    =========================================================
-    MAIN FUNCTION
-    =========================================================
-*/
 int main()
 {
     srand(static_cast<unsigned int>(time(0)));
